@@ -1,0 +1,164 @@
+set ratios 1:2:3
+
+set previewer ~/.config/lf/preview
+set cleaner ~/.config/lf/cleaner
+
+# Basic Settings
+set hidden true
+set ignorecase true
+set icons true
+$ {{ mkdir -p ~/.local/share/Trash/files }}
+
+# Custom Functions
+cmd mkdir ${{
+  printf "Directory Name: "
+  read ans
+  mkdir $ans
+}}
+
+cmd mkfile ${{
+  printf "File Name: "
+  read ans
+  nvim $ans
+}}
+
+cmd move ${{
+  printf "Move or rename to: "
+  read ans
+  mv $f $ans
+}}
+
+cmd setwallpaper ${{
+    cp $f /home/jeremy/.config/wallpaper
+    feh --bg-fill /home/jeremy/.config/wallpaper/$(basename $f)
+    betterlockscreen -u /home/jeremy/.config/wallpaper/$(basename $f) --fx blur 1   
+}}
+
+# Archive bindings
+cmd unarchive ${{
+  case "$f" in
+      *.zip) unzip "$f" ;;
+      *.tar.gz) tar -xzvf "$f" ;;
+      *.tar.bz2) tar -xjvf "$f" ;;
+      *.tar) tar -xvf "$f" ;;
+      *) echo "Unsupported format" ;;
+  esac
+}}
+
+
+cmd copyClipboard ${{
+  selected_file="$f"
+  echo $selected_file | xclip -selection clipboard ; notify-send "Copied to clipboard $selected_file"
+}}
+
+# Trash bindings
+cmd smart-delete ${{
+  IFS=$'\n'                         # Iterar correctamente incluso con espacios
+  for f in $fx; do
+    if [[ "$f" == "$HOME/.local/share/Trash/files/"* ]]; then
+      rm -rf -- "$f"               # Eliminación permanente
+    else
+      mv -- "$f" "$HOME/.local/share/Trash/files/"
+    fi
+  done
+}}
+
+
+# Comando 'restore-selected': sólo funciona si estás dentro de trash_files_dir
+cmd restore-selected ${{
+  # Verificar ubicación actual
+  if [ "$PWD" != "$trash_files_dir" ]; then
+    echo "❌ No estás en la carpeta de la papelera: $trash_files_dir"
+    return
+  fi
+
+  # Iterar sobre los seleccionados ($fx), uno por línea
+  IFS=$'\n'
+  for f in $fx; do
+    name="$(basename "$f")"
+    info="$trash_info_dir/${name}.trashinfo"
+
+    # Extraer la ruta original del .trashinfo
+    orig="$(grep '^Path=' "$info" 2>/dev/null | cut -d'=' -f2-)"
+    if [ -z "$orig" ]; then
+      echo "⚠️  No se encontró Path en $info"
+      continue
+    fi
+
+    # Asegurar que exista el directorio destino
+    destdir="$(dirname "$orig")"
+    mkdir -p "$destdir"
+
+    # Mover de regreso y limpiar metadatos
+    mv -f "$f" "$orig"
+    rm -f "$info"
+    echo "✅ Restaurado: $orig"
+  done
+}}
+
+cmd splitzellij ${{
+  # 1) Verificar que estamos dentro de Zellij
+  if [ -z "$ZELLIJ" ]; then
+    notify-send "❌ No estás en una sesión de Zellij"
+    exit 1
+  fi
+
+  # 2) Calcular la ruta: carpeta o carpeta padre de un archivo
+  if [ -d "$f" ]; then
+    path="$f"
+  else
+    path="$(dirname "$f")"
+  fi
+
+  # 3) Notificación de debug (opcional)
+  notify-send "🖥️ Abrir pane en: $path"
+
+  # 4) Abrir nuevo pane en el mismo tab, en el cwd correcto,
+  #    y arrancar tu shell (por ejemplo bash o zsh)
+  zellij action new-pane --cwd "$path" -- "$SHELL" \
+    || { notify-send "⚠️ Error abriendo pane"; exit 1; }
+
+  # 5) Salir del subshell para no quedarte con prompt extra
+  exit 0
+}}
+
+
+
+
+# Bindings
+map D
+map m
+
+map au unarchive
+map ae $wine "$f"
+map ac copyClipboard
+map e !nvim "$f"
+map mr set preview_files toggle; redraw
+
+map o splitzellij
+
+
+
+# Basic Functions
+map . set hidden!
+map Dd smart-delete
+map Dr restore-selected
+map p paste
+map x cut
+map y copy
+map <enter> open
+map R reload
+map mf mkfile
+map md mkdir
+map mm move
+map bg setwallpaper
+map C clear
+
+# Movement
+map gs cd /home/jeremy/Documents/scripts
+map gD cd /home/jeremy/Documents
+map gd cd /home/jeremy/Downloads
+map gp cd /home/jeremy/Pictures
+map gc cd /home/jeremy/.config
+map gt cd /home/jeremy/.local/share/Trash/files
+map gb cd /usr/local/bin
