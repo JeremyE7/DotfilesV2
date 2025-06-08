@@ -17,12 +17,12 @@ exec --no-startup-id ~/.config/scripts/todo.sh
 exec --no-startup-id ~/.config/scripts/spotify.sh
 
 set $refresh_i3status killall -SIGUSR1 i3status
-bindsym XF86AudioRaiseVolume exec --no-startup-id /home/jeremy/scripts/handle_volume.sh increase
-bindsym XF86AudioLowerVolume exec --no-startup-id /home/jeremy/scripts/handle_volume.sh decrease
-bindsym XF86AudioMute exec --no-startup-id /home/jeremy/scripts/handle_volume.sh toggle_mute
-bindsym XF86AudioMicMute exec --no-startup-id /home/jeremy/scripts/handle_volume.sh toggle_mic_mute
-bindsym XF86MonBrightnessUp exec --no-startup-id /home/jeremy/scripts/handle_bright.sh 0.1 up
-bindsym XF86MonBrightnessDown exec --no-startup-id /home/jeremy/scripts/handle_bright.sh 0.1 down
+bindsym XF86AudioRaiseVolume exec --no-startup-id ~/.config/scripts/handle_volume.sh increase
+bindsym XF86AudioLowerVolume exec --no-startup-id ~/.config/scripts/handle_volume.sh decrease
+bindsym XF86AudioMute exec --no-startup-id ~/.config/scripts/handle_volume.sh toggle_mute
+bindsym XF86AudioMicMute exec --no-startup-id ~/.config/scripts/handle_volume.sh toggle_mic_mute
+bindsym XF86MonBrightnessUp exec --no-startup-id ~/.config/scripts/handle_bright.sh 0.1 up
+bindsym XF86MonBrightnessDown exec --no-startup-id ~/.config/scripts/handle_bright.sh 0.1 down
 bindsym Print exec --no-startup-id flameshot gui
 
 
@@ -128,7 +128,7 @@ bindsym $mod+Shift+r restart
 bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -B 'Yes, exit i3' 'i3-msg exit'"
 
 #---COMANDS FOR PC STUFF---
-bindsym $mod+Shift+p exec "/home/jeremy/scripts/powermenu.sh"
+bindsym $mod+Shift+p exec "~/.config/scripts/powermenu.sh"
 
 mode "resize" {
     bindsym j resize shrink width 10 px or 10 ppt

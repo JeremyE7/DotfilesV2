@@ -1,20 +1,23 @@
 #!/bin/bash
 
 poweroff_function() {
-    # echo 'your_user_password' | sudo -S /sbin/poweroff
     notify-send "Apagando el sistema..."
+    sleep 3
+    shutdown now
 }
 
 reboot_function() {
-    echo 'your_user_password' | sudo -S /sbin/reboot
+    notify-send "Reiniciando el sistema..."
+    sleep 3
+    reboot
 }
 
-options=" \tApagar\n \tReiniciar\n \tCerrar Sesión"
+options="    Apagar\n    Reiniciar\n    Cerrar Sesión"
 
-selected_option=$(echo -e "$options" | rofi -dmenu -i -p "Selecciona una opción:" -width 20 -lines 3 -font "hack 10" -padding 30 -separator-style none)
+selected_option=$(echo -e "$options" | rofi -dmenu -i -p "Selecciona una opción:" -width 20 -lines 3 -font "CaskaydiaCove Nerd Font 10" -padding 30 -separator-style none)
 
 case "$selected_option" in
-    " Apagar") poweroff_function ;;
-    " Reiniciar") shutdown -r now ;;
-    " Cerrar Sesión") i3-msg exit ;;
+    "    Apagar") poweroff_function ;;
+    "    Reiniciar") reboot_function ;;
+    "    Cerrar Sesión") i3-msg exit ;;
 esac 

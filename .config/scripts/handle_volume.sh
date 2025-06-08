@@ -1,59 +1,65 @@
 #!/usr/bin/env bash
 
-MAX_VOLUME=140
-NOTIFY_ID=9999
+# Función para enviar notificación con barra + porcentaje
+notify_volume() {
+  volume=$(pactl get-sink-volume @DEFAULT_SINK@ | grep -oP '\d+%' | head -1 | tr -d '%')
+  bar=$(seq -s '─' $((volume / 5)) | sed 's/[0-9]//g') # cada "─" es 5%
 
-# Función para obtener el volumen actual
+  notify-send -r 9999 -h int:value:"$volume" -i audio-volume-high "Volumen"
+}
+
+# Refresca i3status si existe
+refresh_i3status() {
+  pkill -SIGUSR1 i3status 2>/dev/null
+}
+
+# Obtener volumen actual
 get_current_volume() {
-  pactl get-sink-volume @DEFAULT_SINK@ | grep -oP '\d+(?=%)' | head -1
+  pactl get-sink-volume @DEFAULT_SINK@ | grep -oP '\d+%' | head -1 | tr -d '%'
 }
 
-# Función para saber si está muteado
-is_muted() {
-  pactl get-sink-mute @DEFAULT_SINK@ | grep -q 'yes'
-}
-
-# Función para mostrar la notificación
-send_notification() {
-  local vol=$1
-  local icon
-
-  if is_muted; then
-    icon="🔇"
-    notify-send -r $NOTIFY_ID "$icon MUTE"
-  else
-    if [ "$vol" -eq 0 ]; then
-      icon="🔈"
-    elif [ "$vol" -lt 50 ]; then
-      icon="🔉"
-    else
-      icon="🔊"
-    fi
-    notify-send -r $NOTIFY_ID "$icon ${vol}%"
-  fi
-}
-
+# Subir volumen
 increase_volume() {
-  local vol=$(get_current_volume)
-  if [ "$vol" -ge $MAX_VOLUME ]; then
-    send_notification "$vol"
-    exit 0
+  current=$(get_current_volume)
+  if [ "$current" -lt 100 ]; then
+    pactl set-sink-volume @DEFAULT_SINK@ +5%
   fi
-  pactl set-sink-volume @DEFAULT_SINK@ +5%
-  send_notification "$(get_current_volume)"
+  notify_volume
+  refresh_i3status
 }
 
+# Bajar volumen
 decrease_volume() {
   pactl set-sink-volume @DEFAULT_SINK@ -5%
-  send_notification "$(get_current_volume)"
+  notify_volume
+  refresh_i3status
 }
 
+# Mute / desmuteo
 toggle_mute() {
   pactl set-sink-mute @DEFAULT_SINK@ toggle
-  send_notification "$(get_current_volume)"
+  mute_state=$(pactl get-sink-mute @DEFAULT_SINK@ | awk '{print $2}')
+  if [ "$mute_state" = "yes" ]; then
+    notify-send -r 9999 -i audio-volume-muted "🔇 Silenciado" ""
+  else
+    notify_volume
+  fi
+  refresh_i3status
 }
 
+# Mute del micrófono
 toggle_mic_mute() {
   pactl set-source-mute @DEFAULT_SOURCE@ toggle
-  muted=$(pactl get-source-mute @DEFAULT_SOURCE@ | grep -q 'yes' && echo "🎙️ OFF" || echo "🎙️ ON")
-  notify-send -r $NOTIFY_ID "$muted
+  refresh_i3status
+}
+
+# Entrada principal
+case "$1" in
+  increase) increase_volume ;;
+  decrease) decrease_volume ;;
+  toggle_mute) toggle_mute ;;
+  toggle_mic_mute) toggle_mic_mute ;;
+  *) echo "Uso: $0 {increase|decrease|toggle_mute|toggle_mic_mute}" ;;
+esac
+
+exit 0
