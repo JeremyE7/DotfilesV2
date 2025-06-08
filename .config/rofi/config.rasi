@@ -12,4 +12,4 @@ configuration{
     sidebar-mode: true;
 }
 
-@theme "/home/jeremy/.config/rofi/themes/jeremyv1.rasi"
+@theme "~/.config/rofi/themes/jeremyv1.rasi"
